@@ -34,7 +34,6 @@ void ParticleFilter::init(double x, double y, double theta, double std[])
       particle.x = N_x(gen);
       particle.y = N_y(gen);
       particle.theta = N_theta(gen);
-      particle.weight = 1.0;
 
       particles.push_back(particle);
     }
