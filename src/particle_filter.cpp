@@ -147,8 +147,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       if (dist(op.x, op.y, 0, 0) < sensor_range)
       {
         om.id = op.id;
-        om.x =   op.x * cos(-p.theta) + op.y * sin(-p.theta) + p.x;
-        om.y = - op.x * sin(-p.theta) + op.y * cos(-p.theta) + p.y;
+        om.x = op.x * cos(-p.theta) + op.y * sin(-p.theta) + p.x;
+        om.y = -op.x * sin(-p.theta) + op.y * cos(-p.theta) + p.y;
 
         transformedObservations.push_back(om);
       }
@@ -171,7 +171,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       double x_minus_mu_x2 = (x - mu_x) * (x - mu_x);
       double y_minus_mu_y2 = (y - mu_y) * (y - mu_y);
 
-      long double exponential = -((x_minus_mu_x2 / two_sigma_x2) + ( y_minus_mu_y2 / two_sigma_y2));
+      long double exponential = -((x_minus_mu_x2 / two_sigma_x2) + (y_minus_mu_y2 / two_sigma_y2));
       long double w = one_over_2pi_sigma_xy * exp(exponential);
 
       weight *= w;
@@ -194,11 +194,13 @@ void ParticleFilter::resample()
 
   std::vector<Particle> resampledParticles;
 
-  for (int i = 0; i < num_particles; i++) {
+  for (int i = 0; i < num_particles; i++)
+  {
     particles[i].weight = weights[i];
   }
 
-  for(int i = 0; i < num_particles; i++) {
+  for (int i = 0; i < num_particles; i++)
+  {
     int index = distribution(gen);
     resampledParticles.push_back(particles[index]);
   }
