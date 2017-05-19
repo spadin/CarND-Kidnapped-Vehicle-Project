@@ -77,6 +77,27 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
   //   observed measurement to this particular landmark.
   // NOTE: this method will NOT be called by the grading code. But you will probably find it useful to
   //   implement this method and use it as a helper during the updateWeights phase.
+
+  for (int i = 0; i < observations.size(); i++)
+  {
+    LandmarkObs &o = observations[i];
+
+    double minDistance = 1.0e100;
+    int minId = -1;
+    for (int j = 0; j < predicted.size(); j++)
+    {
+      LandmarkObs p = predicted[j];
+
+      double distance = dist(o.x, o.y, p.x, p.y);
+      if (distance < minDistance)
+      {
+        minDistance = distance;
+        minId = p.id;
+      }
+    }
+
+    o.id = minId;
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
@@ -93,6 +114,80 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   //   3.33. Note that you'll need to switch the minus sign in that equation to a plus to account
   //   for the fact that the map's y-axis actually points downwards.)
   //   http://planning.cs.uiuc.edu/node99.html
+
+  std::vector<LandmarkObs> landmarks;
+  for (int i = 0; i < map_landmarks.landmark_list.size(); i++)
+  {
+    LandmarkObs l;
+    l.x = map_landmarks.landmark_list[i].x_f;
+    l.y = map_landmarks.landmark_list[i].y_f;
+    l.id = map_landmarks.landmark_list[i].id_i;
+    landmarks.push_back(l);
+  }
+
+  double sigma_x = std_landmark[0];
+  double sigma_y = std_landmark[1];
+
+  double two_sigma_x2 = 2 * sigma_x * sigma_x;
+  double two_sigma_y2 = 2 * sigma_y * sigma_y;
+  double one_over_2pi_sigma_xy = (1 / (2 * M_PI * sigma_x * sigma_y));
+
+  std::vector<long double> nextWeights;
+
+  for (int i = 0; i < num_particles; i++)
+  {
+    Particle &p = particles[i];
+    std::vector<LandmarkObs> transformedObservations;
+
+    for (int i = 0; i < observations.size(); i++)
+    {
+      LandmarkObs op = observations[i];
+      LandmarkObs om;
+
+      if (dist(op.x, op.y, 0, 0) < sensor_range)
+      {
+        om.id = op.id;
+        om.x =   op.x * cos(-p.theta) + op.y * sin(-p.theta) + p.x;
+        om.y = - op.x * sin(-p.theta) + op.y * cos(-p.theta) + p.y;
+
+        transformedObservations.push_back(om);
+      }
+    }
+    dataAssociation(landmarks, transformedObservations);
+
+    long double weight = 1.0;
+
+    for (int i = 0; i < transformedObservations.size(); i++)
+    {
+      LandmarkObs l = transformedObservations[i];
+
+      double x = l.x;
+      double y = l.y;
+      int idx = l.id - 1;
+
+      double mu_x = map_landmarks.landmark_list[idx].x_f;
+      double mu_y = map_landmarks.landmark_list[idx].y_f;
+
+      double x_minus_mu_x2 = (x - mu_x) * (x - mu_x);
+      double y_minus_mu_y2 = (y - mu_y) * (y - mu_y);
+
+      long double exponential = -((x_minus_mu_x2 / two_sigma_x2) + ( y_minus_mu_y2 / two_sigma_y2));
+      long double w = one_over_2pi_sigma_xy * exp(exponential);
+
+      weight *= w;
+    }
+
+    nextWeights.push_back(weight);
+  }
+
+  long double weightSum = 0.0;
+  for (int i = 0; i < num_particles; i++)
+    weightSum += nextWeights[i];
+  if (weightSum > 0)
+    for (int i = 0; i < num_particles; i++)
+      nextWeights[i] /= weightSum;
+
+  weights = nextWeights;
 }
 
 void ParticleFilter::resample()
