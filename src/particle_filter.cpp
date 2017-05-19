@@ -147,8 +147,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       if (dist(op.x, op.y, 0, 0) < sensor_range)
       {
         om.id = op.id;
-        om.x = op.x * cos(-p.theta) + op.y * sin(-p.theta) + p.x;
-        om.y = -op.x * sin(-p.theta) + op.y * cos(-p.theta) + p.y;
+        om.x = op.x * cos(p.theta) - op.y * sin(p.theta) + p.x;
+        om.y = op.x * sin(p.theta) + op.y * cos(p.theta) + p.y;
 
         transformedObservations.push_back(om);
       }
