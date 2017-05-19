@@ -132,7 +132,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   double two_sigma_y2 = 2 * sigma_y * sigma_y;
   double one_over_2pi_sigma_xy = (1 / (2 * M_PI * sigma_x * sigma_y));
 
-  std::vector<long double> nextWeights;
+  std::vector<double> nextWeights;
 
   for (int i = 0; i < num_particles; i++)
   {
@@ -179,13 +179,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     nextWeights.push_back(weight);
   }
-
-  long double weightSum = 0.0;
-  for (int i = 0; i < num_particles; i++)
-    weightSum += nextWeights[i];
-  if (weightSum > 0)
-    for (int i = 0; i < num_particles; i++)
-      nextWeights[i] /= weightSum;
 
   weights = nextWeights;
 }
